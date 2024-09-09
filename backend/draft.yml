@@ -1,0 +1,5 @@
+controllers:
+  GamesAPI:
+    index:
+      query: all
+
