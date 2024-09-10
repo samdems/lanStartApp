@@ -18,7 +18,7 @@ class GamesController extends Controller
     public function show(Request $request, Game $game): View
     {
 
-        $game->load('gameArchives');
+        $game = $game->load('gameArchives');
 
         return view('games.show', compact('game'));
     }
@@ -27,20 +27,19 @@ class GamesController extends Controller
     {
         return view('games.create');
     }
+
     public function store(Request $request)
     {
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'archive' => 'required|file|mimes:zip',
             'cover_image' => 'required|file|mimes:jpeg,png',
             'box_image' => 'required|file|mimes:jpeg,png',
             'icon_image' => 'required|file|mimes:jpeg,png',
             'logo_image' => 'required|file|mimes:jpeg,png',
         ]);
 
-        $file = $request->file('archive')->store('public/archives');
         $boxImage = $request->file('box_image')->store('public/images');
         $coverImage = $request->file('cover_image')->store('public/images');
         $iconImage = $request->file('icon_image')->store('public/images');
@@ -53,20 +52,24 @@ class GamesController extends Controller
 
         $game = Game::create($validated);
 
-        $gameArchive = GameArchive::create([
-            'version' => '1.0',
-            'file' => $file,
-            'game_id' => $game->id,
-        ]);
-
         return redirect()->route('games.index');
     }
 
-    public function update(Request $request, Game $game): View
+    public function edit(Request $request, Game $game): View
     {
-        $game->update([]);
+        return view('games.edit', compact('game'));
+    }
 
-        return view('games.update');
+    public function update(Request $request, Game $game)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+        ]);
+
+        $game->update($validated);
+
+        return redirect()->route('games.show', $game);
     }
 
     public function delete(Request $request): View

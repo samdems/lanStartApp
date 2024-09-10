@@ -1,14 +1,10 @@
 <x-input-label for="title" value="Title" />
-<x-text-input name="title"></x-text-input>
+<x-text-input name="title" value="{{ $game->title ?? old('title') }}"></x-text-input>
 <x-input-error for="title" :messages="$errors->first('title')"/>
 
 <x-input-label for="description" value="Description"/>
-<x-text-input name="description"></x-text-input>
+<x-text-input name="description" value="{{ $game->description ?? old('description') }}"></x-text-input>
 <x-input-error for="description" :messages="$errors->first('description')"/>
-
-<x-input-label for="archive" value="Archive"/>
-<x-file name="archive"></x-file>
-<x-input-error for="archive" :messages="$errors->first('archive')"/>
 
 <x-input-label for="cover_image" value="Cover Image"/>
 <x-file name="cover_image"></x-file>

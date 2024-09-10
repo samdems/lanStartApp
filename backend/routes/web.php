@@ -23,5 +23,9 @@ require __DIR__.'/auth.php';
 Route::get('games/delete', [App\Http\Controllers\GamesController::class, 'delete']);
 Route::resource('games', App\Http\Controllers\GamesController::class);
 
+Route::prefix('games/{game}')->group(function () {
+    Route::resource('gameArchives', App\Http\Controllers\GameArchiveController::class)->except('index','show');
+});
+
 
 Route::get('/api/games', [App\Http\Controllers\GamesAPIController::class, 'index'])->name('api.games.index');

@@ -16,6 +16,10 @@ return new class extends Migration
             $table->string('version');
             $table->string('file');
             $table->foreignId('game_id')->constrained();
+            $table->string('operating_system');
+            $table->longText('script');
+
+            $table->unique(['game_id', 'version']);
             $table->timestamps();
         });
     }

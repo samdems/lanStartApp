@@ -19,6 +19,8 @@ class GameArchive extends Model
         'version',
         'file',
         'game_id',
+        'operating_system',
+        'script',
     ];
 
     /**
