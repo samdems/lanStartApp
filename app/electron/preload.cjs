@@ -1,48 +1,75 @@
 const { contextBridge } = require("electron");
 const { ipcRenderer } = require("electron");
 
-ipcRenderer.send("start-program", '/usr/bin/espeak "test"');
 
-contextBridge.exposeInMainWorld("speak", (text) => {
-  ipcRenderer.send("start-program", `/usr/bin/espeak "${text}"`);
+contextBridge.exposeInMainWorld("downloadFile", (url,gameName,cb) => {
+  return new Promise((resolve, reject) => {
+    ipcRenderer.on("downloadProgress", (event, data) => {
+      if (cb) cb(data);
+    });
+
+    ipcRenderer.on("downloadComplete", (event, data) => {
+      resolve(data);
+    });
+
+    ipcRenderer.on("downloadError", (event, message) => {
+      reject(message);
+    });
+
+    ipcRenderer.send("downloadFile", url,gameName);
+  })
 });
 
-contextBridge.exposeInMainWorld("downloadFile", (text,cbs) => {
-  ipcRenderer.on("downloadProgress", (event, percentage) => {
-    cbs?.onProgress(percentage);
-  });
-  ipcRenderer.on("downloadComplete", (event, percentage) => {
-    cbs?.onComplete(percentage);
-  });
-  ipcRenderer.send("downloadFile", text);
+contextBridge.exposeInMainWorld("downloadAssets", (files,gameName,cb) => {
+  console.log("downloadAssets", files);
+  return new Promise((resolve, reject) => {
+
+    ipcRenderer.on("downloadAssetsProgress", (event, data) => {
+      if (cb) cb(data);
+    });
+
+    ipcRenderer.on("downloadAssetsComplete", (event, data) => {
+      resolve(data);
+    });
+
+    ipcRenderer.on("downloadAssetsError", (event, message) => {
+      reject(message);
+    });
+
+    ipcRenderer.send("downloadAssets", files, gameName);
+  })
 });
 
-contextBridge.exposeInMainWorld("unzipFile", (text,cbs) => {
-  ipcRenderer.send("unzipFile", text);
-  ipcRenderer.on("unzippedFile", (event, percentage) => {
-    cbs?.onComplete(percentage);
-  });
-  ipcRenderer.on("unzippedFileError", (event, message) => {
-    cbs?.onError(message);
-  });
+contextBridge.exposeInMainWorld("addFiles", (files,gameName,cb) => {
+  return new Promise((resolve, reject) => {
+    ipcRenderer.on("addFilesComplete", (event, data) => {
+      resolve(data);
+    });
+
+    ipcRenderer.on("addFilesError", (event, message) => {
+      reject(message);
+    });
+
+    ipcRenderer.send("addFiles", files, gameName);
+  })
 });
 
-contextBridge.exposeInMainWorld("installFile", (text,cbs) => {
-  ipcRenderer.send("installFile", text);
-  ipcRenderer.on("installedFile", (event, percentage) => {
-    cbs?.onComplete(percentage);
-  });
-  ipcRenderer.on("installedFileProgress", (event, percentage) => {
-    cbs?.onProgress(percentage);
-  });
-  ipcRenderer.on("installedFileError", (event, message) => {
-    cbs?.onError(message);
-  });
-});
+contextBridge.exposeInMainWorld("runScript", (action,gameName,cb) => {
+  console.log("runScript", action, gameName);
+  return new Promise((resolve, reject) => {
 
-contextBridge.exposeInMainWorld("playFile", (text,cbs) => {
-  ipcRenderer.send("playFile", text);
-  ipcRenderer.on("playError", (event, message) => {
-    cbs?.onError(message);
-  });
+    ipcRenderer.on("runScriptProgress", (event, data) => {
+      if (cb) cb(data);
+    });
+
+    ipcRenderer.on("runScriptComplete", (event, data) => {
+      resolve(data);
+    });
+
+    ipcRenderer.on("runScriptError", (event, message) => {
+      reject(message);
+    });
+
+    ipcRenderer.send("runScript", action, gameName);
+  })
 });

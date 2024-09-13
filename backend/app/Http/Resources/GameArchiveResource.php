@@ -20,6 +20,7 @@ class GameArchiveResource extends JsonResource
             'id' => $this->id,
             'version' => $this->version,
             'file' => $host . Storage::url($this->file),
+            'script' => $this->script,
             'game_id' => $this->game_id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

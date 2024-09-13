@@ -18,7 +18,8 @@ function createWindow() {
       preload: path.join(__dirname, "preload.cjs"), // Optional if you need preload
     },
   });
-  const url = process.env.VITE_DEV_SERVER_URL || "http://localhost:5174";
+
+  const url = process.env.VITE_DEV_SERVER_URL || "http://localhost:5173";
 
   // Load Vite dev server in development or build file in production
   win.loadURL(url || `file://${path.join(__dirname, "dist/index.html")}`);
@@ -40,77 +41,121 @@ app.on("window-all-closed", () => {
   }
 });
 
-ipcMain.on("start-program", (event, programPath) => {
-  exec(programPath, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error executing command: ${error}`);
-      return;
+ipcMain.on("downloadFile", async (event, url, gameName) => {
+  try {
+    console.log("downloadFile", url);
+    const fileName = url.split("/").pop();
+    const downloadPath = path.join(__dirname, "../downloads");
+    const filePath = path.join(downloadPath, fileName);
+    const gamePath = path.join(downloadPath, gameName);
+
+    // Ensure download directory exists
+    if (!fs.existsSync(downloadPath)) {
+      fs.mkdirSync(downloadPath, { recursive: true });
     }
-    console.log(`Output: ${stdout}`);
-  });
-});
 
-ipcMain.on("downloadFile", async (event, url) => {
-  const downloader = new Downloader({
-    url,
-    directory: "./downloads",
-    cloneFiles: false,
-    onProgress: function (percentage, chunk, remainingSize) {
-      event.reply("downloadProgress", percentage);
-    },
-  });
-
-  await downloader.download();
-
-  event.reply("downloadComplete", "done");
-});
-
-ipcMain.on("unzipFile", (event, file) => {
-  const directory = "./downloads";
-  const subDirectory = file.split(".")[0];
-  const fileLocation = `${directory}/${file}`;
-  const unzipStream = unzip.Extract({ path: directory + "/" + subDirectory });
-
-  fs.createReadStream(fileLocation)
-    .pipe(unzipStream)
-    .on("close", () => {
-      console.log("done");
-      event.reply("unzippedFile", "done");
-    })
-    .on("error", (error) => {
-      console.error("Stream error:", error);
-      event.reply("unzippedFileError", error.message);
+    const downloader = new Downloader({
+      url,
+      directory: downloadPath,
+      cloneFiles: false,
+      onProgress: function (percentage, chunk, remainingSize) {
+        event.reply("downloadProgress", { message: "Downloading", percentage });
+      },
     });
+
+    console.log("downloading");
+    await downloader.download();
+
+    event.reply("downloadProgress", { message: "Unzipping", percentage: "10" });
+    console.log("unzipping");
+
+    const unzipStream = fs
+      .createReadStream(filePath)
+      .pipe(unzip.Extract({ path: gamePath }));
+
+    unzipStream.on("entry", (entry) => {
+      console.log("Unzipping", entry.path);
+    });
+
+    unzipStream.on("close", () => {
+      event.reply("downloadProgress", {
+        message: "Unzipping",
+        percentage: "100",
+      });
+      fs.unlinkSync(filePath);
+      console.log("Unzipping done");
+      event.reply("downloadComplete", "done");
+
+    });
+
+    unzipStream.on("error", (err) => {
+      console.error("Unzipping error:", err);
+      event.reply("downloadError", "Unzipping error");
+    });
+  } catch (error) {
+    console.error("Error in download or unzip:", error);
+    event.reply("downloadError", "Error");
+  }
 });
 
-ipcMain.on("installFile", async (event, file) => {
-  const directory = "./downloads";
-  const fileLocation = `../${directory}/${file}/lanStart.js`;
-  const scripts = await import(`${fileLocation}`);
-  if (!scripts.install) {
-    return
+ipcMain.on("downloadAssets", async (event, files, gameName) => {
+  console.log("downloadAssets", files);
+  for (const file of files) {
+    const downloadPath = path.join(__dirname, "../downloads");
+    const fileType = file.url.split(".").pop();
+    const downloader = new Downloader({
+      url: file.url,
+      directory: downloadPath + "/" + gameName + "/_assets",
+      cloneFiles: false,
+      fileName: file.name + "." + fileType,
+      onProgress: function (percentage, chunk, remainingSize) {
+        event.reply("downloadAssetsProgress", {message:file.name, percentage});
+      },
+    });
+    await downloader.download();
   }
-  scripts.install({ 
-    onComplete: () => {
-      event.reply("installedFile", "done");
-    },
-    onProgress: (percentage) => {
-      event.reply("installedFileProgress", percentage);
-    },
-    onError: (error) => {
-      event.reply("installedFileError", error);
-    }
-  });
-})
-ipcMain.on("playFile", async (event, file) => {
-  const directory = "./downloads";
-  const fileLocation = `../${directory}/${file}/lanStart.js`;
-  const scripts = await import(`${fileLocation}`);
-  console.log(scripts.start);
-  scripts.start({ 
-    onError: (error) => {
-      console.error("Error:", error);
-      event.reply("playedFileError", error);
-    }
-  });
+
+  console.log("downloading");
+
+  event.reply("downloadAssetsComplete", "done");
 });
+
+ipcMain.on("addFiles", async (event, files, gameName) => {
+  for (const file of files) {
+    const name = file.name;
+    const text = file.text;
+    await fs.promises.writeFile(
+      path.join(__dirname, "../downloads", gameName, name),
+      text
+    );
+  }
+  event.reply("addFilesComplete", "done");
+})
+
+ipcMain.on("runScript", async (event,action, gameName) => {
+  console.log("runScript", action, gameName);
+  const gamePath = path.join(__dirname, "../downloads", gameName);
+  const scriptPath = path.join(gamePath, '_script.js');
+  console.log("scriptPath", scriptPath);
+
+  try {
+    var script = await import(scriptPath);
+  } catch (error) {
+    console.error("Error in import script", error);
+    return event.reply("runScriptError", {msg:"Error in import script",error});
+
+  }
+  console.log("script", script);
+  if (script[action]) {
+    await script[action]((msg,percentage)=>{
+      event.reply("runScriptProgress", {msg,percentage});
+      console.log("runScriptProgress", {msg,percentage});
+    })
+    return event.reply("runScriptComplete", "done");
+    console.log("runScriptComplete", "done");
+  }
+  console.log("runScriptError", "Action not found");
+  return event.reply("runScriptError", "Action not found");
+
+});
+

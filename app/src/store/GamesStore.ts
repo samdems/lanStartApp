@@ -8,6 +8,7 @@ export const useGamesStore = defineStore('games', ()=>{
   const games = ref(JSON.parse(localStorage.getItem('games')) || []);
   const activeGameId = ref(null);
   const isLoading = ref(false);
+  const error = ref('');
   const downloadedGames = ref(JSON.parse(localStorage.getItem('downloadedGames')) || []);
 
   const fetchGames = async () =>{
@@ -16,12 +17,19 @@ export const useGamesStore = defineStore('games', ()=>{
       if(localLoading)
         isLoading.value = true;
     },100);
-    const response = await fetch('http://localhost/api/games');
-    const data = await response.json();
-    games.value = data.data;
-    isLoading.value = false;
-    localLoading = false;
-    localStorage.setItem('games', JSON.stringify(games.value));
+    try {
+      const response = await fetch('http://localhost/api/games');
+      const data = await response.json();
+      games.value = data.data;
+      localLoading = false;
+      localStorage.setItem('games', JSON.stringify(games.value));
+    }catch(e){
+      error.value = "Error loading games";
+      return console.error(e);
+    }finally{
+      isLoading.value = false;
+    }
+    
   }
 
   const selectGame = (game) => {
@@ -44,12 +52,13 @@ export const useGamesStore = defineStore('games', ()=>{
 
     return {
       games,
+      error,
       selectGame,
       activeGame,
       fetchGames,
       isLoading,
       isActivedGameDownloaded,
-    downloadedGames
+      downloadedGames
     }
 })
 

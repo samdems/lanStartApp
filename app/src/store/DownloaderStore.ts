@@ -1,99 +1,62 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+
 export const useDownloaderStore = defineStore("downloader",() => {
-const isActive = ref(false);
-const progress = ref(0);
-const info = ref("");
-const progressText = ref("");
-const url = ref('');
-const file = ref('');
+  const progress = ref(0);
+  const progressText = ref('');
+  const isActive = ref(false);
 
-function setFile(value) {
-  url.value = value;
-}
-function download() {
-  file.value = url.value.split('/').pop();
+  const downloadGame = async (gameinfo,archive) => {
+    isActive.value = true;
+    const url = gameinfo.game_archives[archive].file;
+    const gameName = gameinfo.title;
+    if(!url) return console.error('No url provided');
+    if(!gameName) return console.error('No game name provided');
 
-  return new Promise((resolve, reject) => {
-    if (typeof window.downloadFile !== 'function') {
-      reject(new Error('downloadFile function is not defined'));
-      return;
-    }
-    window.downloadFile(url.value, {
-      onProgress: (e) => {
-        progress.value = e; 
-      },
-      onComplete: () => {
-        info.value = "Download completed";
-        resolve();
-      },
-      onError: (error) => {
-        info.value = "Download failed";
-        reject(error);
+    try {
+      await window.downloadFile(url,gameName, (data) => {  
+        progress.value = data.percentage;
+        progressText.value = data.message;
+        console.log(data);
+      }).catch(e => console.error(e));
+
+      await window.downloadAssets([
+        {url:gameinfo.cover_image, name:"cover_image"},
+        {url:gameinfo.box_image, name:"box_image"},
+        {url:gameinfo.icon_image, name:"icon_image"},
+        {url:gameinfo.logo_image, name:"logo_image"},
+      ],gameName,(data) => {
+          debugger;
+        progress.value = data.percentage;
+        progressText.value = data.message;
+        console.log(data);
       }
-    });
-  });
-}
+      ).catch(e => console.error(e));
 
-function unzip() {
-  return new Promise((resolve, reject) => {
-    if (typeof window.unzipFile !== 'function') {
-      reject(new Error('unzipFile function is not defined'));
-      return;
-    }
+      await window.addFiles([
+        {text:JSON.stringify(gameinfo,null,2), name:"_gameinfo.json"},
+        {text:gameinfo.game_archives[archive].script, name:"_script.js"},
+      ],gameName).catch(e => console.error(e));
 
-    window.unzipFile(file.value, {
-      onProgress: (e) => {
-        progress.value = e;
-      },
-      onComplete: () => {
-        info.value = "Unzip completed";
-        resolve();
-      },
-      onError: (error) => {
-        info.value = "Unzip failed";
-        reject(error);
+      await window.runScript('install',gameName,(data) => {
+        progress.value = data.percentage;
+        progressText.value = data.message;
+        console.log(data);
       }
-    });
-  });
-}
+      ).catch(e => console.error(e));
 
-function install() {
-  return new Promise((resolve, reject) => {
-    if (typeof window.installFile !== 'function') {
-      reject(new Error('installFile function is not defined'));
-      return;
+    }catch(e){
+      console.error(e);
+    }finally{
+      isActive.value = false;
     }
-
-    window.installFile(file.value.split('.').shift(), {
-      onProgress: (e) => {
-        progress.value = e;
-      },
-      onComplete: () => {
-        info.value = "Install completed";
-        resolve();
-      },
-      onError: (error) => {
-        info.value = "Install failed";
-        reject(error);
-      }
-    });
-  });
-}
-
-async function start() {
-  try{
-  isActive.value = true;
-  progressText.value = "downloading..."
-  await download();
-  info.value = "unzipping...";
-  await unzip();
-  progressText.value = "installing..."
-  await install();
-  }finally{
-    isActive.value = false;
-    progressText.value = "done"
   }
-}
-  return { progress, info,url, file, start,setFile,progressText,isActive};
+
+  return {
+    progress,
+    progressText,
+    isActive,
+    downloadGame,
+  }
+
 });

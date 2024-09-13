@@ -22,6 +22,9 @@ const gamesStore = useGamesStore();
         Game launcher
       </h1>
       <div class="flex-grow"></div>
+      <div v-if="gamesStore.error" class="text-red-500 p-4">
+        {{ gamesStore.error }}
+      </div>
       <div>
         <ThemeChange class="w-32 p-4" />
       </div>

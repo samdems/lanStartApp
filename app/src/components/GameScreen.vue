@@ -5,21 +5,14 @@ const gamesStore = useGamesStore();
 const downloaderStore = useDownloaderStore();
 
 async function download() {
-  downloaderStore.setFile(gamesStore.activeGame.game_archives[0].file);
-  await downloaderStore.start();
-  gamesStore.downloadedGames.push(gamesStore.activeGame.id);
-  localStorage.setItem('downloadedGames', JSON.stringify(gamesStore.downloadedGames));
-
+  downloaderStore.downloadGame(gamesStore.activeGame,0)
 }
 function play() {
-  const file = gamesStore.activeGame.game_archives[0].file.split('/').pop().split('.')[0]
-  window.playFile(file);
 }
 </script>
 
 <template>
   <div class="w-full h-full overflow-y-auto pb-20" v-if="gamesStore.activeGame">
-    {{}}
     <img
       :src="gamesStore.activeGame?.cover_image"
       alt="game"
@@ -40,6 +33,7 @@ function play() {
           <div>{{ gamesStore.activeGame.description }}</div>
         </div>
       </div>
+      <pre>{{ gamesStore.activeGame }}</pre>
       <img
         :src="gamesStore.activeGame?.box_image"
         alt="game"
