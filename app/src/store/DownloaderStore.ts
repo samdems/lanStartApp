@@ -1,18 +1,20 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useGamesStore } from './GamesStore'
 
 export const useDownloaderStore = defineStore("downloader",() => {
   const progress = ref(0);
   const progressText = ref('');
   const isActive = ref(false);
+  const gamesStore = useGamesStore();
 
-  const uninstallGame = async (gameinfo) => {
+  const uninstall = async (gameinfo) => {
     isActive.value = true;
-    const gameName = gameinfo.title;
+    const gameName = 'game-'+gameinfo.id;
     if(!gameName) return console.error('No game name provided');
 
     try {
-      await window.runScript('uninstall',gameName,(data: {percentage: string, message: string}) => {
+      await window.uninstall(gameName,(data: {percentage: string, message: string}) => {
         progress.value = data.percentage;
         progressText.value = data.message;
         console.log(data);
@@ -21,13 +23,14 @@ export const useDownloaderStore = defineStore("downloader",() => {
       console.error(e);
     }finally{
       isActive.value = false;
+      gamesStore.fetchGames();
     }
   }
 
   const downloadGame = async (gameinfo,archive:number) => {
     isActive.value = true;
     const url = gameinfo.game_archives[archive].file;
-    const gameName = gameinfo.title;
+    const gameName = 'game-'+gameinfo.id;
     if(!url) return console.error('No url provided');
     if(!gameName) return console.error('No game name provided');
 
@@ -65,6 +68,7 @@ export const useDownloaderStore = defineStore("downloader",() => {
       console.error(e);
     }finally{
       isActive.value = false;
+      gamesStore.fetchGames();
     }
   }
 
@@ -72,6 +76,7 @@ export const useDownloaderStore = defineStore("downloader",() => {
     progress,
     progressText,
     isActive,
+    uninstall,
     downloadGame,
   }
 

@@ -10,10 +10,10 @@ async function download() {
  await downloaderStore.downloadGame(gamesStore.activeGame,0)
 }
 function play() {
-  window.runScript('start', gamesStore.activeGame.title)
+  window.runScript('start', gamesStore.activeGame.file)
 }
 function uninstall() {
-  downloaderStore.uninstallGame(gamesStore.activeGame)
+  downloaderStore.uninstall(gamesStore.activeGame)
 }
 </script>
 

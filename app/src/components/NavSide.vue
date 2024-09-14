@@ -23,15 +23,18 @@ const gamesStore = useGamesStore();
           class="h-8 sm:h-16 sm:h-16 md:h-20 md:h-20 lg:h-24"
         />
         <div class="flex flex-col justify-center items-center">
-          <p
+          <div
             class="md:text-1xl lg:text-2xl font-bold"
             :class="{
               'text-primary-content': game.active,
               'text-neutral-content': !game.active,
             }"
           >
-            {{ game.title }}
-          </p>
+          <p>{{ game.title }}</p>
+          <span class="badge badge-outline" v-if="game.installed">
+            installed
+          </span>
+          </div>
         </div>
       </div>
       <div class="flex gap-4 p-4 flex-justify-center items-center">

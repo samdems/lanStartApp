@@ -1,11 +1,9 @@
 // electron/main.js
 import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
-import dotenv from "dotenv";
-import { exec } from "child_process";
 import fs from "fs";
 import { Downloader } from "nodejs-file-downloader";
-import unzip from "unzipper";
+import "./downloadIpc.js"
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 function createWindow() {
@@ -41,62 +39,7 @@ app.on("window-all-closed", () => {
   }
 });
 
-ipcMain.on("download", async (event, url, gameName) => {
-  try {
-    console.log("download", url);
-    const fileName = url.split("/").pop();
-    const downloadPath = path.join(__dirname, "../downloads");
-    const filePath = path.join(downloadPath, fileName);
-    const gamePath = path.join(downloadPath, gameName);
 
-    // Ensure download directory exists
-    if (!fs.existsSync(downloadPath)) {
-      fs.mkdirSync(downloadPath, { recursive: true });
-    }
-
-    const downloader = new Downloader({
-      url,
-      directory: downloadPath,
-      cloneFiles: false,
-      onProgress: function (percentage, chunk, remainingSize) {
-        event.reply("downloadProgress", { message: "Downloading", percentage });
-      },
-    });
-
-    console.log("downloading");
-    await downloader.download();
-
-    event.reply("downloadProgress", { message: "Unzipping", percentage: "10" });
-    console.log("unzipping");
-
-    const unzipStream = fs
-      .createReadStream(filePath)
-      .pipe(unzip.Extract({ path: gamePath }));
-
-    unzipStream.on("entry", (entry) => {
-      console.log("Unzipping", entry.path);
-    });
-
-    unzipStream.on("close", () => {
-      event.reply("downloadProgress", {
-        message: "Unzipping",
-        percentage: "100",
-      });
-      fs.unlinkSync(filePath);
-      console.log("Unzipping done");
-      event.reply("downloadComplete", "done");
-
-    });
-
-    unzipStream.on("error", (err) => {
-      console.error("Unzipping error:", err);
-      event.reply("downloadError", "Unzipping error");
-    });
-  } catch (error) {
-    console.error("Error in download or unzip:", error);
-    event.reply("downloadError", "Error");
-  }
-});
 
 ipcMain.on("downloadAssets", async (event, files, gameName) => {
   console.log("downloadAssets", files);
@@ -209,13 +152,13 @@ ipcMain.on("uninstall", async (event, gameName) => {
   const action = "uninstall";
   if (script[action]) {
     await script[action]((msg,percentage)=>{
-      event.reply("runScriptProgress", {msg,percentage});
-      console.log("runScriptProgress", {msg,percentage});
+      event.reply("uninstallProgress", {msg,percentage});
+      console.log("uninstallProgress", {msg,percentage});
     })
-    console.log("runScriptComplete", "done");
-    return event.reply("runScriptComplete", "done");
   }
-
+  console.log(gamePath);
   fs.rmdirSync(gamePath, { recursive: true });
   
+  console.log("uninstallComplete", "done");
+  return event.reply("uninstallComplete", "done");
 });

@@ -14,7 +14,7 @@ export const useGamesStore = defineStore('games', ()=>{
   const onlineStore = useOnlineStore();
 
   const fetchGames = async () =>{
-    if(!onlineStore.isOnline.value){
+    if(!onlineStore.isOnline){
       error.value = "No internet connection";
       checkInstalledGames();
       return;
@@ -42,9 +42,9 @@ export const useGamesStore = defineStore('games', ()=>{
     }
     
   }
-  const fiximage = async (game,type:string) => {
+  const fiximage = async (game,filename:string,type:string) => {
     const coverImageExtionsion = game[type].split('.').pop();
-    game[type] = await window.readImage(`downloads/${game.title}/_assets/${type}.${coverImageExtionsion}`);
+    game[type] = await window.readImage(`downloads/${filename}/_assets/${type}.${coverImageExtionsion}`);
     game[type] = `data:image/${coverImageExtionsion};base64,` + game[type]
     return game;
   }
@@ -54,10 +54,11 @@ export const useGamesStore = defineStore('games', ()=>{
         const file = await window.readFile(`downloads/${game}/_gameinfo.json`);
         let gameinfo = JSON.parse(file); 
         gameinfo.installed = true;
-        gameinfo = await fiximage(gameinfo,'cover_image');
-        gameinfo = await fiximage(gameinfo,'box_image');
-        gameinfo = await fiximage(gameinfo,'icon_image');
-        gameinfo = await fiximage(gameinfo,'logo_image');
+        gameinfo.file = game;
+        gameinfo = await fiximage(gameinfo,game,'cover_image');
+        gameinfo = await fiximage(gameinfo,game,'box_image');
+        gameinfo = await fiximage(gameinfo,game,'icon_image');
+        gameinfo = await fiximage(gameinfo,game,'logo_image');
         games.value[gameinfo.id] = gameinfo;
       }
   }
