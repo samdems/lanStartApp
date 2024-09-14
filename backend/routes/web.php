@@ -29,3 +29,4 @@ Route::prefix('games/{game}')->group(function () {
 
 
 Route::get('/api/games', [App\Http\Controllers\GamesAPIController::class, 'index'])->name('api.games.index');
+Route::get('/api/ping', fn() => response()->json(['message' => 'pong']));
