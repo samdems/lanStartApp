@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { useDownloaderStore } from "../store/DownloaderStore";
 import { useGamesStore } from "../store/GamesStore";
+import { ref } from "vue";
 const gamesStore = useGamesStore();
 const downloaderStore = useDownloaderStore();
+const files = ref<string[]>([])
 
 async function download() {
-  downloaderStore.downloadGame(gamesStore.activeGame,0)
+ await downloaderStore.downloadGame(gamesStore.activeGame,0)
 }
 function play() {
+  window.runScript('start', gamesStore.activeGame.title)
+}
+function uninstall() {
+  downloaderStore.uninstallGame(gamesStore.activeGame)
 }
 </script>
 
@@ -24,16 +30,18 @@ function play() {
           {{ gamesStore.activeGame.title }}
         </h1>
         <div class="flex justify-start gap-4">
-          <button @click="download" class="btn btn-primary" :disabled="gamesStore.isActivedGameDownloaded"
+          <button @click="download" class="btn btn-primary" :disabled="gamesStore.activeGame.installed"
             >Install</button>
-          <button @click="play" class="btn btn-accent" :disabled="!gamesStore.isActivedGameDownloaded"
+            <button @click="uninstall" class="btn btn-error" :disabled="!gamesStore.activeGame.installed"
+            >uninstall</button>
+
+          <button @click="play" class="btn btn-accent" :disabled="!gamesStore.activeGame.installed"
             >Play</button>
         </div>
         <div class="flex gap-4 pt-4">
           <div>{{ gamesStore.activeGame.description }}</div>
         </div>
       </div>
-      <pre>{{ gamesStore.activeGame }}</pre>
       <img
         :src="gamesStore.activeGame?.box_image"
         alt="game"

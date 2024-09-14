@@ -2,6 +2,7 @@
 import ThemeChange from "./theme-change.vue";
 import { useGamesStore } from "../store/GamesStore";
 const gamesStore = useGamesStore();
+
 </script>
 
 <template>

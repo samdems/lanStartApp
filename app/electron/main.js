@@ -19,7 +19,7 @@ function createWindow() {
     },
   });
 
-  const url = process.env.VITE_DEV_SERVER_URL || "http://localhost:5173";
+  const url = process.env.VITE_DEV_SERVER_URL || "http://localhost:3000";
 
   // Load Vite dev server in development or build file in production
   win.loadURL(url || `file://${path.join(__dirname, "dist/index.html")}`);
@@ -41,9 +41,9 @@ app.on("window-all-closed", () => {
   }
 });
 
-ipcMain.on("downloadFile", async (event, url, gameName) => {
+ipcMain.on("download", async (event, url, gameName) => {
   try {
-    console.log("downloadFile", url);
+    console.log("download", url);
     const fileName = url.split("/").pop();
     const downloadPath = path.join(__dirname, "../downloads");
     const filePath = path.join(downloadPath, fileName);
@@ -133,29 +133,89 @@ ipcMain.on("addFiles", async (event, files, gameName) => {
 })
 
 ipcMain.on("runScript", async (event,action, gameName) => {
+  let script;
   console.log("runScript", action, gameName);
   const gamePath = path.join(__dirname, "../downloads", gameName);
   const scriptPath = path.join(gamePath, '_script.js');
   console.log("scriptPath", scriptPath);
 
   try {
-    var script = await import(scriptPath);
+    script = await import(scriptPath);
   } catch (error) {
     console.error("Error in import script", error);
     return event.reply("runScriptError", {msg:"Error in import script",error});
-
   }
+
   console.log("script", script);
   if (script[action]) {
     await script[action]((msg,percentage)=>{
       event.reply("runScriptProgress", {msg,percentage});
       console.log("runScriptProgress", {msg,percentage});
     })
-    return event.reply("runScriptComplete", "done");
     console.log("runScriptComplete", "done");
+    return event.reply("runScriptComplete", "done");
   }
   console.log("runScriptError", "Action not found");
   return event.reply("runScriptError", "Action not found");
 
 });
 
+ipcMain.on("readDir", async (event, path) => {
+  try {
+    const files = await fs.promises.readdir(__dirname + '/../' + path);
+    event.reply("readDirComplete", files);
+  } catch (error) {
+    console.error("Error in readDir", error);
+    return event.reply("readDirError", error);
+  }
+});
+
+ipcMain.on("readFile", async (event, path) => {
+  try {
+    const data = await fs.promises.readFile(__dirname + '/../' + path, 'utf8');
+    event.reply("readFileComplete", data);
+  } catch (error) {
+    console.error("Error in readFile", error);
+    return event.reply("readFileError", error);
+  }
+});
+
+ipcMain.on("readImage", async (event, path) => {
+  try {
+    const base64 = await fs.promises.readFile(__dirname + '/../' + path, 'base64');
+    event.reply("readImageComplete", base64);
+  } catch (error) {
+    console.error("Error in readImage", error);
+    return event.reply("readImageError", error);
+  }
+});
+
+ipcMain.on("uninstall", async (event, gameName) => {
+  let script;
+  const gamePath = path.join(__dirname, "../downloads", gameName);
+  const scriptPath = path.join(gamePath, '_script.js');
+
+  if (!fs.existsSync(gamePath)) {
+    return event.reply("uninstallError", "Game not found");
+  }
+
+  try {
+    script = await import(scriptPath);
+  } catch (error) {
+    console.error("Error in import script", error);
+    return event.reply("runScriptError", {msg:"Error in import script",error});
+  }
+
+  const action = "uninstall";
+  if (script[action]) {
+    await script[action]((msg,percentage)=>{
+      event.reply("runScriptProgress", {msg,percentage});
+      console.log("runScriptProgress", {msg,percentage});
+    })
+    console.log("runScriptComplete", "done");
+    return event.reply("runScriptComplete", "done");
+  }
+
+  fs.rmdirSync(gamePath, { recursive: true });
+  
+});

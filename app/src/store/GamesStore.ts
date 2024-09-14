@@ -2,16 +2,23 @@ import { defineStore } from 'pinia'
 import { ref,computed,watch } from 'vue'
 import dayjs from 'dayjs'
 import fs from 'fs'
+import { useOnlineStore } from './OnlineStore'
 
 export const useGamesStore = defineStore('games', ()=>{
   
-  const games = ref(JSON.parse(localStorage.getItem('games')) || []);
+  const games = ref({});
   const activeGameId = ref(null);
   const isLoading = ref(false);
   const error = ref('');
-  const downloadedGames = ref(JSON.parse(localStorage.getItem('downloadedGames')) || []);
+  const downloadedGames = ref([]);
+  const onlineStore = useOnlineStore();
 
   const fetchGames = async () =>{
+    if(!onlineStore.isOnline.value){
+      error.value = "No internet connection";
+      checkInstalledGames();
+      return;
+    } 
     let localLoading = true;
     setTimeout(() => { 
       if(localLoading)
@@ -20,16 +27,39 @@ export const useGamesStore = defineStore('games', ()=>{
     try {
       const response = await fetch('http://localhost/api/games');
       const data = await response.json();
-      games.value = data.data;
+      data.data.forEach((game) => {
+        game.host = 'http://localhost';
+        game.installed = false;
+        games.value[game.id] = game;
+      });
       localLoading = false;
-      localStorage.setItem('games', JSON.stringify(games.value));
     }catch(e){
       error.value = "Error loading games";
       return console.error(e);
     }finally{
+      checkInstalledGames();
       isLoading.value = false;
     }
     
+  }
+  const fiximage = async (game,type:string) => {
+    const coverImageExtionsion = game[type].split('.').pop();
+    game[type] = await window.readImage(`downloads/${game.title}/_assets/${type}.${coverImageExtionsion}`);
+    game[type] = `data:image/${coverImageExtionsion};base64,` + game[type]
+    return game;
+  }
+  const checkInstalledGames = async () => {
+    const gamesdir = await window.readDir('downloads');
+      for (const game of gamesdir) {
+        const file = await window.readFile(`downloads/${game}/_gameinfo.json`);
+        let gameinfo = JSON.parse(file); 
+        gameinfo.installed = true;
+        gameinfo = await fiximage(gameinfo,'cover_image');
+        gameinfo = await fiximage(gameinfo,'box_image');
+        gameinfo = await fiximage(gameinfo,'icon_image');
+        gameinfo = await fiximage(gameinfo,'logo_image');
+        games.value[gameinfo.id] = gameinfo;
+      }
   }
 
   const selectGame = (game) => {
@@ -37,16 +67,16 @@ export const useGamesStore = defineStore('games', ()=>{
   }
 
   const activeGame = computed(() => {
-    return games.value.find((game) => game.id === activeGameId.value);
+    return games.value[activeGameId.value];
   });
-
-  const isActivedGameDownloaded = computed(() => {
-    return downloadedGames.value.includes(activeGameId.value);
-  })
 
 
   document.addEventListener("DOMContentLoaded", () => {
-    fetchGames();
+    if(onlineStore.isOnline.value){
+      fetchGames();
+    }else{
+      checkInstalledGames();
+    }
   });
 
 
@@ -57,7 +87,6 @@ export const useGamesStore = defineStore('games', ()=>{
       activeGame,
       fetchGames,
       isLoading,
-      isActivedGameDownloaded,
       downloadedGames
     }
 })

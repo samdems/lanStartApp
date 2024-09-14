@@ -5,11 +5,11 @@ import GameScreen from "./components/GameScreen.vue";
 import NavSide from "./components/NavSide.vue";
 import ThemeChange from "./components/theme-change.vue";
 import { useGamesStore } from "./store/GamesStore";
+import { useOnlineStore } from "./store/OnlineStore";
 import dayjs from "dayjs";
 
 const gamesStore = useGamesStore();
-
-
+const onlineStore = useOnlineStore();
 
 </script>
 
@@ -22,9 +22,13 @@ const gamesStore = useGamesStore();
         Game launcher
       </h1>
       <div class="flex-grow"></div>
-      <div v-if="gamesStore.error" class="text-red-500 p-4">
+      <div v-if="gamesStore.error" class="text-error p-4">
         {{ gamesStore.error }}
       </div>
+      <div v-if="!onlineStore.isOnline" class="text-warning p-4">
+        Offline mode 
+      </div>
+
       <div>
         <ThemeChange class="w-32 p-4" />
       </div>

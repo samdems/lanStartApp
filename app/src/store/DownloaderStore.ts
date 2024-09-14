@@ -6,7 +6,25 @@ export const useDownloaderStore = defineStore("downloader",() => {
   const progressText = ref('');
   const isActive = ref(false);
 
-  const downloadGame = async (gameinfo,archive) => {
+  const uninstallGame = async (gameinfo) => {
+    isActive.value = true;
+    const gameName = gameinfo.title;
+    if(!gameName) return console.error('No game name provided');
+
+    try {
+      await window.runScript('uninstall',gameName,(data: {percentage: string, message: string}) => {
+        progress.value = data.percentage;
+        progressText.value = data.message;
+        console.log(data);
+      }).catch(e => console.error(e));
+    }catch(e){
+      console.error(e);
+    }finally{
+      isActive.value = false;
+    }
+  }
+
+  const downloadGame = async (gameinfo,archive:number) => {
     isActive.value = true;
     const url = gameinfo.game_archives[archive].file;
     const gameName = gameinfo.title;
@@ -14,7 +32,7 @@ export const useDownloaderStore = defineStore("downloader",() => {
     if(!gameName) return console.error('No game name provided');
 
     try {
-      await window.downloadFile(url,gameName, (data) => {  
+      await window.download(url,gameName, (data: {percentage: string, message: string}) => {  
         progress.value = data.percentage;
         progressText.value = data.message;
         console.log(data);
@@ -25,8 +43,7 @@ export const useDownloaderStore = defineStore("downloader",() => {
         {url:gameinfo.box_image, name:"box_image"},
         {url:gameinfo.icon_image, name:"icon_image"},
         {url:gameinfo.logo_image, name:"logo_image"},
-      ],gameName,(data) => {
-          debugger;
+      ],gameName,(data: {percentage: string, message: string}) => {
         progress.value = data.percentage;
         progressText.value = data.message;
         console.log(data);
@@ -38,13 +55,12 @@ export const useDownloaderStore = defineStore("downloader",() => {
         {text:gameinfo.game_archives[archive].script, name:"_script.js"},
       ],gameName).catch(e => console.error(e));
 
-      await window.runScript('install',gameName,(data) => {
+      await window.runScript('install',gameName,(data: {percentage: string, message: string}) => {
         progress.value = data.percentage;
         progressText.value = data.message;
         console.log(data);
       }
       ).catch(e => console.error(e));
-
     }catch(e){
       console.error(e);
     }finally{
