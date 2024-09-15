@@ -1,7 +1,7 @@
 <x-guest-layout>
     <!-- Session Status -->
 
-    <form method="POST" action="{{ route('login') }}">
+    <form method="POST" action="{{ route('login') }}" class="text-neutral-content">
         @csrf
 
         <!-- Email Address -->

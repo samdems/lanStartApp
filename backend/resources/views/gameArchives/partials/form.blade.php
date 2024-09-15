@@ -11,5 +11,8 @@
 <x-input-error for="archive" :messages="$errors->first('archive')"/>
 
 <x-input-label for="script" value="Script"/>
-<x-text-area name="script" :value="$gameArchive->script ?? old('script')"></x-textarea>
+<x-text-code name="script" :value="$gameArchive->script ?? old('script')"></x-text-code>
 <x-input-error for="script" :messages="$errors->first('script')"/>
+
+
+
