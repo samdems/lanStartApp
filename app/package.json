@@ -19,6 +19,11 @@
     "dist": "npm run build && electron-builder"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.6.0",
+    "@fortawesome/free-brands-svg-icons": "^6.6.0",
+    "@fortawesome/free-regular-svg-icons": "^6.6.0",
+    "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.5",
     "electron-store": "^10.0.0",

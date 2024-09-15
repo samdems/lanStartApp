@@ -1,6 +1,7 @@
 <script setup lang="ts">
-  import { ref,watch } from "vue";
-const theme = ref("dark");
+  import { ref,watch,onMounted
+  } from "vue";
+const theme = ref();
 const themes = [
       "light",
       "dark",
@@ -35,20 +36,22 @@ const themes = [
       "nord",
       "sunset",
     ]
-
+onMounted(() => {
+  theme.value = window.localStorage.getItem('theme')
+});
 watch(() => {
-  window.document.getElementsByTagName('html')[0].dataset.theme = theme.value;
+  if (theme.value) {
+    window.document.getElementsByTagName('html')[0].dataset.theme = theme.value;
+    window.localStorage.setItem('theme', theme.value);
+  }
 });
 </script>
 
 <template>
-  <div class="w-full h-full flex items-center justify-center">
     <select
       v-model="theme"
       class="select select-bordered select-primary w-full"
     >
     <option v-for="theme in themes" :value="theme">{{theme}}</option>
     </select>
-    
-  </div>
 </template>

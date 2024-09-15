@@ -4,6 +4,8 @@ import path from "path";
 import fs from "fs";
 import { Downloader } from "nodejs-file-downloader";
 import "./downloadIpc.js"
+import dotenv from "dotenv";
+dotenv.config();
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 function createWindow() {
@@ -17,10 +19,8 @@ function createWindow() {
     },
   });
 
-  const url = process.env.VITE_DEV_SERVER_URL || "http://localhost:3000";
-
   // Load Vite dev server in development or build file in production
-  win.loadURL(url || `file://${path.join(__dirname, "dist/index.html")}`);
+  win.loadURL(process.env.VITE_DEV_SERVER_URL || `file://${path.join(__dirname, "dist/index.html")}`);
 }
 
 app.whenReady().then(() => {
@@ -51,7 +51,7 @@ ipcMain.on("downloadAssets", async (event, files, gameName) => {
       directory: downloadPath + "/" + gameName + "/_assets",
       cloneFiles: false,
       fileName: file.name + "." + fileType,
-      onProgress: function (percentage, chunk, remainingSize) {
+      onProgress: function (percentage) {
         event.reply("downloadAssetsProgress", {message:file.name, percentage});
       },
     });

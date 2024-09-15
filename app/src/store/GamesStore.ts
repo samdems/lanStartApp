@@ -19,11 +19,8 @@ export const useGamesStore = defineStore('games', ()=>{
       checkInstalledGames();
       return;
     } 
-    let localLoading = true;
-    setTimeout(() => { 
-      if(localLoading)
-        isLoading.value = true;
-    },100);
+     isLoading.value = true;
+     const start = dayjs();
     try {
       const response = await fetch('http://localhost/api/games');
       const data = await response.json();
@@ -32,12 +29,15 @@ export const useGamesStore = defineStore('games', ()=>{
         game.installed = false;
         games.value[game.id] = game;
       });
-      localLoading = false;
     }catch(e){
       error.value = "Error loading games";
       return console.error(e);
     }finally{
       checkInstalledGames();
+      if(dayjs().diff(start,'second') < 1){
+        console.log('waiting 2 seconds');
+        await new Promise((resolve) => setTimeout(resolve,1000));
+      }
       isLoading.value = false;
     }
     
@@ -73,7 +73,7 @@ export const useGamesStore = defineStore('games', ()=>{
 
 
   document.addEventListener("DOMContentLoaded", () => {
-    if(onlineStore.isOnline.value){
+    if(onlineStore.isOnline){
       fetchGames();
     }else{
       checkInstalledGames();

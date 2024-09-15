@@ -1,12 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useGamesStore } from './GamesStore'
+import { useAlartsStore } from './AlartsStore'
 
 export const useDownloaderStore = defineStore("downloader",() => {
   const progress = ref(0);
   const progressText = ref('');
   const isActive = ref(false);
   const gamesStore = useGamesStore();
+  const alertStore = useAlartsStore();
 
   const uninstall = async (gameinfo) => {
     isActive.value = true;
@@ -18,12 +20,13 @@ export const useDownloaderStore = defineStore("downloader",() => {
         progress.value = data.percentage;
         progressText.value = data.message;
         console.log(data);
-      }).catch(e => console.error(e));
+      })
     }catch(e){
-      console.error(e);
+      alertStore.add({type:'error',title:"Uninstall Error",message:e.message,timeout:5000})
     }finally{
       isActive.value = false;
       gamesStore.fetchGames();
+      alertStore.add({type:'success',title:"Uninstall Complete",message: gameinfo.title + " uninstalled successfully",timeout:5000})
     }
   }
 
@@ -39,7 +42,7 @@ export const useDownloaderStore = defineStore("downloader",() => {
         progress.value = data.percentage;
         progressText.value = data.message;
         console.log(data);
-      }).catch(e => console.error(e));
+      })
 
       await window.downloadAssets([
         {url:gameinfo.cover_image, name:"cover_image"},
@@ -51,7 +54,7 @@ export const useDownloaderStore = defineStore("downloader",() => {
         progressText.value = data.message;
         console.log(data);
       }
-      ).catch(e => console.error(e));
+      )
 
       await window.addFiles([
         {text:JSON.stringify(gameinfo,null,2), name:"_gameinfo.json"},
@@ -63,12 +66,13 @@ export const useDownloaderStore = defineStore("downloader",() => {
         progressText.value = data.message;
         console.log(data);
       }
-      ).catch(e => console.error(e));
+      )
     }catch(e){
-      console.error(e);
+      alertStore.add({type:'error',title:"Install Error",message:e.message,timeout:5000})
     }finally{
       isActive.value = false;
       gamesStore.fetchGames();
+      alertStore.add({type:'success',title:"Install Complete",message: gameinfo.title + " install successfully",timeout:5000})
     }
   }
 

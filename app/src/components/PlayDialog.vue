@@ -1,0 +1,87 @@
+<script setup lang="ts">
+import { ref, watch } from "vue";
+import { useGamesStore } from "../store/GamesStore";
+import { faPlay } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+
+const id = "play-dialog";
+const options = ref([]);
+
+const gamesStore = useGamesStore();
+function openModal() {
+  const modal = document.getElementById(id);
+  modal.showModal();
+}
+
+function calculateOptions() {
+  options.value = [];
+  const script = gamesStore.activeGame.game_archives[0].script;
+
+  const regex = /export\s+(?:const|let|var|function|class)\s+(\w+)/g;
+
+  const matches = [];
+  let match;
+
+  while ((match = regex.exec(script)) !== null) {
+    if (match[1] === "install") {
+      continue;
+    }
+    if (match[1] === "uninstall") {
+      continue;
+    }
+    matches.push(match[1]); // push only the captured name
+  }
+  options.value = matches.map((name) => ({
+    id: name,
+    title: name,
+    action: () => {
+      window.runScript(name, gamesStore.activeGame.file);
+    },
+  }));
+}
+
+function play() {
+  calculateOptions();
+  if(options.value.length === 1 && options.value[0].id === "start") {
+    window.runScript("start", gamesStore.activeGame.file);
+  } else {
+    openModal();
+  }
+}
+
+</script>
+
+<template>
+  <button
+    class="btn btn-accent"
+    :disabled="!gamesStore.activeGame.installed"
+    @click="play"
+  >
+    Play
+    <font-awesome-icon :icon="faPlay" />
+  </button>
+  <dialog :id="id" class="modal">
+    <div class="modal-box">
+      <div
+        v-for="option in options"
+        :key="option.id"
+        class="flex justify-between items-center p-4"
+      >
+        <h3 class="text-lg font-bold">{{ option.title }}</h3>
+        <button
+          class="btn"
+          :class="{ 
+            'btn-primary': option.id === 'start',
+            'btn-secondary': option.id !== 'start'
+          }"
+          @click="option.action"
+        >
+          Play
+        </button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+</template>
