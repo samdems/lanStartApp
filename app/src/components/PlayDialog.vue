@@ -33,7 +33,7 @@ function calculateOptions() {
   }
   options.value = matches.map((name) => ({
     id: name,
-    title: name,
+    title: name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, " "),
     action: () => {
       window.runScript(name, gamesStore.activeGame.file);
     },
@@ -42,8 +42,8 @@ function calculateOptions() {
 
 function play() {
   calculateOptions();
-  if(options.value.length === 1 && options.value[0].id === "start") {
-    window.runScript("start", gamesStore.activeGame.file);
+  if(options.value.length === 1) {
+    window.runScript(options.value[0].id, gamesStore.activeGame.file);
   } else {
     openModal();
   }
@@ -63,7 +63,7 @@ function play() {
   <dialog :id="id" class="modal">
     <div class="modal-box">
       <div
-        v-for="option in options"
+        v-for="(option,index) in options"
         :key="option.id"
         class="flex justify-between items-center p-4"
       >
@@ -71,8 +71,8 @@ function play() {
         <button
           class="btn"
           :class="{ 
-            'btn-primary': option.id === 'start',
-            'btn-secondary': option.id !== 'start'
+            'btn-primary': index === 0, 
+            'btn-secondary': index !== 0 
           }"
           @click="option.action"
         >
