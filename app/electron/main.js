@@ -143,7 +143,7 @@ ipcMain.on("uninstall", async (event, gameName) => {
   }
 
   try {
-    script = await import(scriptPath);
+    script = await import(scriptPath + '?v=' + new Date().getTime());
   } catch (error) {
     console.error("Error in import script", error);
     return event.reply("runScriptError", {msg:"Error in import script",error});
