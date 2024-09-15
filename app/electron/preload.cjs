@@ -1,9 +1,8 @@
-
 const { contextBridge, ipcRenderer } = require("electron");
 
 function registerIpc(eventPrefix) {
   contextBridge.exposeInMainWorld(eventPrefix, (...args) => {
-    const cb = typeof args[args.length - 1] === 'function' ? args.pop() : null; 
+    const cb = typeof args[args.length - 1] === "function" ? args.pop() : null;
     return new Promise((resolve, reject) => {
       if (cb) {
         ipcRenderer.on(`${eventPrefix}Progress`, (_event, data) => {
@@ -19,7 +18,8 @@ function registerIpc(eventPrefix) {
         reject(message);
       });
 
-      ipcRenderer.send(eventPrefix, ...args);     });
+      ipcRenderer.send(eventPrefix, ...args);
+    });
   });
 }
 
@@ -31,4 +31,3 @@ registerIpc("readDir");
 registerIpc("readFile");
 registerIpc("readImage");
 registerIpc("uninstall");
-

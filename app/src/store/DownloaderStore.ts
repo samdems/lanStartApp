@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useGamesStore } from './GamesStore'
 import { useAlartsStore } from './AlartsStore'
+import { useUserStore } from './UserStore'
 
 export const useDownloaderStore = defineStore("downloader",() => {
   const progress = ref(0);
@@ -9,6 +10,7 @@ export const useDownloaderStore = defineStore("downloader",() => {
   const isActive = ref(false);
   const gamesStore = useGamesStore();
   const alertStore = useAlartsStore();
+  const userStore = useUserStore();
 
   const uninstall = async (gameinfo) => {
     isActive.value = true;
@@ -61,7 +63,7 @@ export const useDownloaderStore = defineStore("downloader",() => {
         {text:gameinfo.game_archives[archive].script, name:"_script.js"},
       ],gameName).catch(e => console.error(e));
 
-      await window.runScript('install',gameName,(data: {percentage: string, message: string}) => {
+      await window.runScript('install',gameName,{username:userStore.name},(data: {percentage: string, message: string}) => {
         progress.value = data.percentage;
         progressText.value = data.message;
         console.log(data);
@@ -69,6 +71,7 @@ export const useDownloaderStore = defineStore("downloader",() => {
       )
     }catch(e){
       alertStore.add({type:'error',title:"Install Error",message:e.message,timeout:5000})
+      throw e;
     }finally{
       isActive.value = false;
       gamesStore.fetchGames();

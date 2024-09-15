@@ -75,7 +75,7 @@ ipcMain.on("addFiles", async (event, files, gameName) => {
   event.reply("addFilesComplete", "done");
 })
 
-ipcMain.on("runScript", async (event,action, gameName) => {
+ipcMain.on("runScript", async (event,action, gameName,options) => {
   let script;
   console.log("runScript", action, gameName);
   const gamePath = path.join(__dirname, "../downloads", gameName);
@@ -91,10 +91,10 @@ ipcMain.on("runScript", async (event,action, gameName) => {
 
   console.log("script", script);
   if (script[action]) {
-    await script[action]((msg,percentage)=>{
+    await script[action]((msg,percentage,)=>{
       event.reply("runScriptProgress", {msg,percentage});
       console.log("runScriptProgress", {msg,percentage});
-    })
+    },options)
     console.log("runScriptComplete", "done");
     return event.reply("runScriptComplete", "done");
   }

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useGamesStore } from "../store/GamesStore";
+import { useAlartsStore } from "../store/AlartsStore";
+import { useUserStore } from "../store/UserStore";
 import { faPlay } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
@@ -8,6 +10,9 @@ const id = "play-dialog";
 const options = ref([]);
 
 const gamesStore = useGamesStore();
+const alertsStore = useAlartsStore();
+const userStore = useUserStore();
+
 function openModal() {
   const modal = document.getElementById(id);
   modal.showModal();
@@ -35,20 +40,40 @@ function calculateOptions() {
     id: name,
     title: name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, " "),
     action: () => {
-      window.runScript(name, gamesStore.activeGame.file);
+      try {
+        run(name, gamesStore.activeGame.file);
+      } catch (error) {
+        alertsStore.add({
+          title: "Error",
+          message: error.error || error.message || error,
+          type: "error",
+        });
+        throw error;
+      }
     },
   }));
 }
-
+async function run (name, file) {
+  try {
+    const gameoptions = {username:userStore.name}
+    await window.runScript(name, file,gameoptions);
+  } catch (error) {
+    alertsStore.add({
+      title: "Error",
+      message: error.error || error.message || error,
+      type: "error",
+    }); 
+    throw error;
+  }
+}
 function play() {
   calculateOptions();
-  if(options.value.length === 1) {
-    window.runScript(options.value[0].id, gamesStore.activeGame.file);
+  if (options.value.length === 1) {
+    run(options.value[0].id, gamesStore.activeGame.file);
   } else {
     openModal();
   }
 }
-
 </script>
 
 <template>
@@ -63,16 +88,16 @@ function play() {
   <dialog :id="id" class="modal">
     <div class="modal-box">
       <div
-        v-for="(option,index) in options"
+        v-for="(option, index) in options"
         :key="option.id"
         class="flex justify-between items-center p-4"
       >
         <h3 class="text-lg font-bold">{{ option.title }}</h3>
         <button
           class="btn"
-          :class="{ 
-            'btn-primary': index === 0, 
-            'btn-secondary': index !== 0 
+          :class="{
+            'btn-primary': index === 0,
+            'btn-secondary': index !== 0,
           }"
           @click="option.action"
         >
