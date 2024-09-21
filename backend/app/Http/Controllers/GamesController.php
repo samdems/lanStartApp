@@ -6,6 +6,7 @@ use App\Models\Game;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Models\GameArchive;
+use App\Models\GameKey;
 
 class GamesController extends Controller
 {
@@ -18,7 +19,7 @@ class GamesController extends Controller
     public function show(Request $request, Game $game): View
     {
 
-        $game = $game->load('gameArchives');
+        $game = $game->load('gameArchives', 'gameKeys');
 
         return view('games.show', compact('game'));
     }
@@ -34,6 +35,7 @@ class GamesController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
+            'has_keys' => 'boolean',
             'cover_image' => 'required|file|mimes:jpeg,png',
             'box_image' => 'required|file|mimes:jpeg,png',
             'icon_image' => 'required|file|mimes:jpeg,png',
@@ -49,6 +51,11 @@ class GamesController extends Controller
         $validated['box_image'] = $boxImage;
         $validated['icon_image'] = $iconImage;
         $validated['logo_image'] = $logoImage;
+        if ($request->has('has_keys')) {
+            $validated['has_keys'] = true;
+        } else {
+            $validated['has_keys'] = false;
+        }
 
         $game = Game::create($validated);
 
@@ -65,8 +72,14 @@ class GamesController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
+            'has_keys' => 'boolean',
         ]);
 
+        if ($request->has('has_keys')) {
+            $validated['has_keys'] = true;
+        } else {
+            $validated['has_keys'] = false;
+        }
         $game->update($validated);
 
         return redirect()->route('games.show', $game);
@@ -84,5 +97,14 @@ class GamesController extends Controller
         $game->delete();
 
         return redirect()->route('games.index');
+    }
+
+    public function unAssignkey(Request $request, Game $game, GameKey $gameKey)
+    {
+        $gameKey->update([
+            'user_name' => null,
+            'assigned_at' => null,
+        ]);
+
     }
 }

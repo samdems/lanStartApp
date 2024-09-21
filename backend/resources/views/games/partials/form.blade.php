@@ -6,6 +6,16 @@
 <x-text-input name="description" value="{{ $game->description ?? old('description') }}"></x-text-input>
 <x-input-error for="description" :messages="$errors->first('description')"/>
 
+<div class="flex items-center justify-between gap-4 py-4">
+    <x-input-label for="has_keys" value="Has Keys"/>
+    @if (isset($game))
+        <input type="checkbox" name="has_keys" value="1" class="toggle" {{ $game->has_keys ? 'checked' : '' }} />
+    @else
+        <input type="checkbox" name="has_keys" value="1"  class="toggle" />
+    @endif
+    <x-input-error for="has_keys" :messages="$errors->first('has_keys')"/>
+</div>
+
 <x-input-label for="cover_image" value="Cover Image"/>
 <x-file name="cover_image"></x-file>
 <x-input-error for="cover_image" :messages="$errors->first('cover_image')"/>

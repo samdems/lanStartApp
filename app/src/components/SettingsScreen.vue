@@ -4,6 +4,8 @@ import ThemeChange from "./theme-change.vue";
 import { useOnlineStore } from "../store/OnlineStore";
 import { useAlartsStore } from "../store/AlartsStore";
 import { useUserStore } from "../store/UserStore";
+import { useDownloaderStore } from "../store/DownloaderStore";
+import { useKeyStore } from "../store/KeyStore";
 
 onMounted(() => {
   serverAddress.value = onlineStore.host;
@@ -12,6 +14,8 @@ onMounted(() => {
 const onlineStore = useOnlineStore();
 const alartStore = useAlartsStore();
 const userStore = useUserStore();
+const downloaderStore = useDownloaderStore();
+const keyStore = useKeyStore();
 
 function testAlert() {
   alartStore.add({
@@ -21,6 +25,7 @@ function testAlert() {
   });
 }
 const serverAddress = ref("");
+const showAll = ref(true);
 
 function updateServer() {
   onlineStore.host = serverAddress.value;
@@ -67,6 +72,16 @@ function updateServer() {
     <div>
       <h3 class="text-lg font-bold pb-4">Test</h3>
       <button class="btn btn-primary" @click="testAlert">Test Alert</button>
+    </div>
+    <div>
+      <h3 class="text-lg font-bold pb-4">keys</h3>
+      <div v-for="key in keyStore.getKeys()" :key="key.id">
+        <div class="alert flex justify-between">
+          <div>{{ key.key }}</div>
+          <div>{{ key.game.title }}</div>
+          <div>{{ key.user_name }}</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

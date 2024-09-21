@@ -25,6 +25,7 @@ class GameResource extends JsonResource
             'box_image' =>  $host .  Storage::url($this->box_image),
             'icon_image' => $host . Storage::url($this->icon_image),
             'logo_image' => $host . Storage::url($this->logo_image),
+            'has_keys' => $this->has_keys,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'game_archives' => GameArchiveResource::collection($this->gameArchives),

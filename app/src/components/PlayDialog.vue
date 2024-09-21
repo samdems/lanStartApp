@@ -3,6 +3,7 @@ import { ref, watch } from "vue";
 import { useGamesStore } from "../store/GamesStore";
 import { useAlartsStore } from "../store/AlartsStore";
 import { useUserStore } from "../store/UserStore";
+import { useKeyStore } from "../store/KeyStore";
 import { faPlay } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
@@ -12,6 +13,7 @@ const options = ref([]);
 const gamesStore = useGamesStore();
 const alertsStore = useAlartsStore();
 const userStore = useUserStore();
+const keyStore = useKeyStore();
 
 function openModal() {
   const modal = document.getElementById(id);
@@ -55,7 +57,8 @@ function calculateOptions() {
 }
 async function run (name, file) {
   try {
-    const gameoptions = {username:userStore.name}
+    const gameoptions = {username:userStore.name,key:keyStore.getKey(gamesStore.activeGame.id)?.key};
+    debugger;
     await window.runScript(name, file,gameoptions);
   } catch (error) {
     alertsStore.add({

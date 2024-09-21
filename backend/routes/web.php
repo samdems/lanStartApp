@@ -25,8 +25,8 @@ Route::resource('games', App\Http\Controllers\GamesController::class);
 
 Route::prefix('games/{game}')->group(function () {
     Route::resource('gameArchives', App\Http\Controllers\GameArchiveController::class)->except('index','show');
+    Route::resource('gameKeys', App\Http\Controllers\GameKeyController::class)->except('index','show');
+    Route::post('gameKeys/{gameKey}/assign', [App\Http\Controllers\GameKeyController::class, 'assign'])->name('gameKeys.assign');
+    Route::post('gameKeys/{gameKey}/unassign', [App\Http\Controllers\GameKeyController::class, 'unassign'])->name('gameKeys.unassign');
 });
 
-
-Route::get('/api/games', [App\Http\Controllers\GamesAPIController::class, 'index'])->name('api.games.index');
-Route::get('/api/ping', fn() => response()->json(['message' => 'pong']));

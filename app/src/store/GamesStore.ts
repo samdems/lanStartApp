@@ -3,6 +3,8 @@ import { ref,computed,watch } from 'vue'
 import dayjs from 'dayjs'
 import fs from 'fs'
 import { useOnlineStore } from './OnlineStore'
+import { useUserStore } from './UserStore'
+import { useAlartsStore } from './AlartsStore'
 
 export const useGamesStore = defineStore('games', ()=>{
   
@@ -12,6 +14,20 @@ export const useGamesStore = defineStore('games', ()=>{
   const error = ref('');
   const downloadedGames = ref([]);
   const onlineStore = useOnlineStore();
+  const userStore = useUserStore();
+  const alertStore = useAlartsStore();
+
+  const activateKey = async () => {
+    const response = await fetch(`${onlineStore.host}/api/assignKey`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({key: 'value',user_name:useUserStore().name.value })
+    });
+    const data = await response.json();
+    return;
+  }
 
   const fetchGames = async () =>{
     if(!onlineStore.isOnline){
@@ -22,10 +38,11 @@ export const useGamesStore = defineStore('games', ()=>{
      isLoading.value = true;
      const start = dayjs();
     try {
-      const response = await fetch('http://localhost/api/games');
+      const response = await fetch(`${onlineStore.host}/api/games`);
       const data = await response.json();
+      games.value = {};
       data.data.forEach((game) => {
-        game.host = 'http://localhost';
+        game.host = onlineStore.host;
         game.installed = false;
         games.value[game.id] = game;
       });
@@ -49,17 +66,27 @@ export const useGamesStore = defineStore('games', ()=>{
     return game;
   }
   const checkInstalledGames = async () => {
+    if(! onlineStore.isOnline){
+      games.value = {};
+    }
+
     const gamesdir = await window.readDir('downloads');
       for (const game of gamesdir) {
-        const file = await window.readFile(`downloads/${game}/_gameinfo.json`);
-        let gameinfo = JSON.parse(file); 
-        gameinfo.installed = true;
-        gameinfo.file = game;
-        gameinfo = await fiximage(gameinfo,game,'cover_image');
-        gameinfo = await fiximage(gameinfo,game,'box_image');
-        gameinfo = await fiximage(gameinfo,game,'icon_image');
-        gameinfo = await fiximage(gameinfo,game,'logo_image');
-        games.value[gameinfo.id] = gameinfo;
+        try {
+          const file = await window.readFile(`downloads/${game}/_gameinfo.json`);
+          let gameinfo = JSON.parse(file); 
+          gameinfo.installed = true;
+          gameinfo.file = game;
+          gameinfo = await fiximage(gameinfo,game,'cover_image');
+          gameinfo = await fiximage(gameinfo,game,'box_image');
+          gameinfo = await fiximage(gameinfo,game,'icon_image');
+          gameinfo = await fiximage(gameinfo,game,'logo_image');
+          games.value[gameinfo.id] = gameinfo;
+        }catch(e){
+          alertStore.add({type:'error',title:"Error loading game",message:e.message,timeout:5000})
+          delete games.value[game];
+          console.error(e);
+        }
       }
   }
 
@@ -88,7 +115,8 @@ export const useGamesStore = defineStore('games', ()=>{
       activeGame,
       fetchGames,
       isLoading,
-      downloadedGames
+      downloadedGames,
+      activateKey
     }
 })
 

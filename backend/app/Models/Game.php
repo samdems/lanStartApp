@@ -22,6 +22,7 @@ class Game extends Model
         'box_image',
         'icon_image',
         'logo_image',
+        'has_keys',
     ];
 
     /**
@@ -36,5 +37,10 @@ class Game extends Model
     public function gameArchives(): HasMany
     {
         return $this->hasMany(GameArchive::class);
+    }
+
+    public function gameKeys(): HasMany
+    {
+        return $this->hasMany(GameKey::class);
     }
 }

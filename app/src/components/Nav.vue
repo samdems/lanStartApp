@@ -12,11 +12,13 @@ import { useNavStore } from "../store/NavStore";
 import { useGamesStore } from "../store/GamesStore";
 import { useOnlineStore } from "../store/OnlineStore";
 import { useUserStore } from "../store/UserStore";
+import { useKeyStore } from "../store/KeyStore";
 
 const navStore = useNavStore();
 const gamesStore = useGamesStore();
 const onlineStore = useOnlineStore();
 const userStore = useUserStore();
+const keyStore = useKeyStore();
 
 gamesStore.error = "Error loading games";
 </script>
@@ -86,7 +88,7 @@ gamesStore.error = "Error loading games";
 
     <button
       class="btn btn-ghost text-neutral-content"
-      @click="gamesStore.fetchGames()"
+      @click="gamesStore.fetchGames() && keyStore.fetchKeys()"
     >
      
       <font-awesome-icon :icon="faArrowsRotate" class="text-2xl" :class="{'animate-spin': gamesStore.isLoading}" />

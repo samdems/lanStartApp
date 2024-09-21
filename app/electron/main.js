@@ -83,7 +83,7 @@ ipcMain.on("runScript", async (event,action, gameName,options) => {
   console.log("scriptPath", scriptPath);
 
   try {
-    script = await import(scriptPath);
+    script = await import(scriptPath + '?v=' + new Date().getTime());
   } catch (error) {
     console.error("Error in import script", error);
     return event.reply("runScriptError", {msg:"Error in import script",error});

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref,watch} from 'vue'
 import { useAlartsStore } from './AlartsStore'
+import { useGamesStore } from './GamesStore'
 
 export const useOnlineStore = defineStore('online', ()=>{
 
@@ -9,6 +10,7 @@ export const useOnlineStore = defineStore('online', ()=>{
   const host = ref('http://localhost')
 
   const alartStore = useAlartsStore()
+  const gamesStore = useGamesStore()
 
 
   async function testOnline(){
@@ -26,6 +28,9 @@ export const useOnlineStore = defineStore('online', ()=>{
   watch(isOnline, (online) => {
     if(!online){
       alartStore.add({type:'error',title:"Offline",message:"connection lost",timeout:5000})
+    }else{
+      alartStore.add({type:'success',title:"Online",message:"connection restored",timeout:5000})
+      gamesStore.fetchGames();
     }
   })
 

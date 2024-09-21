@@ -3,11 +3,20 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faDownload, faPlay, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useDownloaderStore } from "../store/DownloaderStore";
 import { useGamesStore } from "../store/GamesStore";
+import { useUserStore } from "../store/UserStore";
+import { useKeyStore } from "../store/KeyStore";
+import { useOnlineStore } from "../store/OnlineStore";
+
 import PlayDialog from "./PlayDialog.vue";
 import NavSide from "./NavSide.vue";
 import { ref } from "vue";
+import dayjs from "dayjs";
 const gamesStore = useGamesStore();
 const downloaderStore = useDownloaderStore();
+const userStore = useUserStore();
+const keyStore = useKeyStore();
+const onlineStore = useOnlineStore();
+
 const files = ref<string[]>([]);
 
 async function download() {
@@ -20,6 +29,9 @@ function play() {
 
 function uninstall() {
   downloaderStore.uninstall(gamesStore.activeGame);
+}
+function formatDate(date: string) {
+  return dayjs(date).format("DD/MM/YYYY - HH:mm");
 }
 </script>
 
@@ -35,7 +47,7 @@ function uninstall() {
       <div class="p-4">
         <div class="flex justify-between items-center">
           <h1 class="text-3xl font-bold">
-            {{ gamesStore.activeGame.title }}
+            {{ gamesStore.activeGame.title }} 
           </h1>
         </div>
 
@@ -55,7 +67,7 @@ function uninstall() {
           <button
             @click="download"
             class="btn btn-primary"
-            :disabled="gamesStore.activeGame.installed"
+            :disabled="gamesStore.activeGame.installed || !onlineStore.isOnline"
           >
             <font-awesome-icon :icon="faDownload" />
           </button>
@@ -70,8 +82,11 @@ function uninstall() {
           <div class="flex-grow"></div>
           <PlayDialog />
         </div>
-        <div class="flex gap-4 pt-4">
+        <div class="flex gap-4 pt-4 flex-col">
           <div>{{ gamesStore.activeGame.description }}</div>
+          <span class="text-sm text-neutral-content" :class="{'text-error': gamesStore.activeGame.has_keys, 'text-success': !gamesStore.activeGame.has_keys }">
+            {{gamesStore.activeGame.has_keys ? "This game requires a key" : "This game does not require a key"}} 
+          </span>
         </div>
       </div>
       <img
