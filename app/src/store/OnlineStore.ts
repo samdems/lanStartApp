@@ -7,7 +7,7 @@ export const useOnlineStore = defineStore('online', ()=>{
 
   const isOnline = ref(true)
   const checking = ref(false)
-  const host = ref('http://localhost')
+  const host = ref(localStorage.getItem('host') || 'http://localhost')
 
   const alartStore = useAlartsStore()
   const gamesStore = useGamesStore()
@@ -24,6 +24,10 @@ export const useOnlineStore = defineStore('online', ()=>{
       isOnline.value = false
     } 
   }
+
+  watch(host, (newHost) => {
+    localStorage.setItem('host',newHost)
+  })
 
   watch(isOnline, (online) => {
     if(!online){
