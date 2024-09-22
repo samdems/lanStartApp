@@ -7,7 +7,6 @@
   "build": {
     "appId": "com.my-electron-app.app",
     "files": [
-      "dist/**/*",
       "electron/**/*"
     ]
   },

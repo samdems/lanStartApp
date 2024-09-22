@@ -85,14 +85,14 @@ async function unzipFile(filePath, gamePath, event) {
   }
 }
 
-ipcMain.on("download", async (event, url, gameName) => {
+ipcMain.on("download", async (event, url, gameName,downloadPath) => {
   try {
+    console.log("--------------------");
     console.log("download", url);
     const fileName = url.split("/").pop();
-    const downloadPath = path.join(__dirname, "../downloads");
     console.log("downloadPath", downloadPath);
+    console.log("fileName", gameName);
     const filePath = path.join(downloadPath, fileName);
-    const gamePath = path.join(downloadPath, gameName);
 
     // Ensure download directory exists
     if (!fs.existsSync(downloadPath)) {
@@ -113,7 +113,9 @@ ipcMain.on("download", async (event, url, gameName) => {
 
     event.reply("downloadProgress", { message: "Unzipping", percentage: "10" });
 
-    unzipFile(filePath, gamePath, event);
+    console.log({ filePath, downloadPath });
+
+    unzipFile(filePath, downloadPath, event);
 
   } catch (error) {
     console.error("Error in download or unzip:", error);

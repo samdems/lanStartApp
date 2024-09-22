@@ -12,6 +12,7 @@ export const useGamesStore = defineStore('games', ()=>{
   const activeGameId = ref(null);
   const isLoading = ref(false);
   const error = ref('');
+  const downloadDir = ref('downloads');
   const downloadedGames = ref([]);
   const onlineStore = useOnlineStore();
   const userStore = useUserStore();
@@ -61,19 +62,20 @@ export const useGamesStore = defineStore('games', ()=>{
   }
   const fiximage = async (game,filename:string,type:string) => {
     const coverImageExtionsion = game[type].split('.').pop();
-    game[type] = await window.readImage(`downloads/${filename}/_assets/${type}.${coverImageExtionsion}`);
+    game[type] = await window.readImage(`${downloadDir.value}/${filename}/_assets/${type}.${coverImageExtionsion}`);
     game[type] = `data:image/${coverImageExtionsion};base64,` + game[type]
     return game;
   }
   const checkInstalledGames = async () => {
+    debugger;
     if(! onlineStore.isOnline){
       games.value = {};
     }
 
-    const gamesdir = await window.readDir('downloads');
+    const gamesdir = await window.readDir(downloadDir.value);
       for (const game of gamesdir) {
         try {
-          const file = await window.readFile(`downloads/${game}/_gameinfo.json`);
+          const file = await window.readFile(`${downloadDir.value}/${game}/_gameinfo.json`);
           let gameinfo = JSON.parse(file); 
           gameinfo.installed = true;
           gameinfo.file = game;
@@ -89,6 +91,7 @@ export const useGamesStore = defineStore('games', ()=>{
         }
       }
   }
+  window.checkInstalledGames = checkInstalledGames;
 
   const selectGame = (game) => {
     activeGameId.value = game.id;
@@ -97,7 +100,9 @@ export const useGamesStore = defineStore('games', ()=>{
   const activeGame = computed(() => {
     return games.value[activeGameId.value];
   });
-
+  watch(downloadDir,() => {
+    checkInstalledGames();
+  });
 
   document.addEventListener("DOMContentLoaded", () => {
     if(onlineStore.isOnline){
@@ -116,7 +121,8 @@ export const useGamesStore = defineStore('games', ()=>{
       fetchGames,
       isLoading,
       downloadedGames,
-      activateKey
+      activateKey,
+      downloadDir,
     }
 })
 

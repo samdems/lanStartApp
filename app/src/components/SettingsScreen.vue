@@ -6,16 +6,19 @@ import { useAlartsStore } from "../store/AlartsStore";
 import { useUserStore } from "../store/UserStore";
 import { useDownloaderStore } from "../store/DownloaderStore";
 import { useKeyStore } from "../store/KeyStore";
-
-onMounted(() => {
-  serverAddress.value = onlineStore.host;
-});
+import { useGamesStore } from "../store/GamesStore";
 
 const onlineStore = useOnlineStore();
 const alartStore = useAlartsStore();
 const userStore = useUserStore();
 const downloaderStore = useDownloaderStore();
 const keyStore = useKeyStore();
+const gamesStore = useGamesStore();
+
+onMounted(() => {
+  serverAddress.value = onlineStore.host;
+  downloadDirectory.value = gamesStore.downloadDir;
+});
 
 function testAlert() {
   alartStore.add({
@@ -25,11 +28,16 @@ function testAlert() {
   });
 }
 const serverAddress = ref("");
+const downloadDirectory = ref("");
 const showAll = ref(true);
 
 function updateServer() {
   onlineStore.host = serverAddress.value;
   onlineStore.testOnline();
+}
+function updateDownload() {
+  debugger;
+  gamesStore.downloadDir = downloadDirectory.value;
 }
 </script>
 
@@ -67,6 +75,21 @@ function updateServer() {
         placeholder="Username"
         v-model="userStore.name"
       />
+    </div>
+    <div>
+      <h3 class="text-lg font-bold pb-4">Download directory</h3>
+      <div class="flex gap-4">
+        <input
+          type="text"
+          class="input w-full input-primary"
+          placeholder="Download directory"
+          v-model="downloadDirectory"
+        />
+        <p
+          class="text-sm text-gray-500"
+        >{{ gamesStore.downloadDir }}</p>
+        <button class="btn btn-primary" @click="updateDownload()">update</button>
+      </div>
     </div>
 
     <div>

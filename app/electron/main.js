@@ -5,7 +5,9 @@ import fs from "fs";
 import { Downloader } from "nodejs-file-downloader";
 import "./downloadIpc.js"
 import dotenv from "dotenv";
+import { execa } from 'execa';
 dotenv.config();
+
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 function createWindow() {
@@ -41,10 +43,9 @@ app.on("window-all-closed", () => {
 
 
 
-ipcMain.on("downloadAssets", async (event, files, gameName) => {
+ipcMain.on("downloadAssets", async (event, files, gameName,downloadPath) => {
   console.log("downloadAssets", files);
   for (const file of files) {
-    const downloadPath = path.join(__dirname, "../downloads");
     const fileType = file.url.split(".").pop();
     const downloader = new Downloader({
       url: file.url,
@@ -63,23 +64,23 @@ ipcMain.on("downloadAssets", async (event, files, gameName) => {
   event.reply("downloadAssetsComplete", "done");
 });
 
-ipcMain.on("addFiles", async (event, files, gameName) => {
+ipcMain.on("addFiles", async (event, files, gameName,downloadpath) => {
   for (const file of files) {
     const name = file.name;
     const text = file.text;
     await fs.promises.writeFile(
-      path.join(__dirname, "../downloads", gameName, name),
+      path.join(downloadpath, gameName, name),
       text
     );
   }
   event.reply("addFilesComplete", "done");
 })
 
-ipcMain.on("runScript", async (event,action, gameName,options) => {
+ipcMain.on("runScript", async (event,action, gameName,options,downloadpath) => {
   let script;
   console.log("runScript", action, gameName);
-  const gamePath = path.join(__dirname, "../downloads", gameName);
-  const scriptPath = path.join(gamePath, '_script.js');
+  const gamePath = path.join(downloadpath, gameName);
+  const scriptPath = path.join(gamePath, '_script.mjs');
   console.log("scriptPath", scriptPath);
 
   try {
@@ -91,10 +92,17 @@ ipcMain.on("runScript", async (event,action, gameName,options) => {
 
   console.log("script", script);
   if (script[action]) {
-    await script[action]((msg,percentage,)=>{
+    options.gamePath = gamePath;
+    options.downloadPath = downloadpath;
+    options.gameName = gameName;
+    options.execa = execa;
+    options.onProgress = (msg,percentage)=>{
       event.reply("runScriptProgress", {msg,percentage});
       console.log("runScriptProgress", {msg,percentage});
-    },options)
+    }
+
+    await script[action](options)
+
     console.log("runScriptComplete", "done");
     return event.reply("runScriptComplete", "done");
   }
@@ -105,7 +113,7 @@ ipcMain.on("runScript", async (event,action, gameName,options) => {
 
 ipcMain.on("readDir", async (event, path) => {
   try {
-    const files = await fs.promises.readdir(__dirname + '/../' + path);
+    const files = await fs.promises.readdir(path);
     event.reply("readDirComplete", files);
   } catch (error) {
     console.error("Error in readDir", error);
@@ -115,7 +123,7 @@ ipcMain.on("readDir", async (event, path) => {
 
 ipcMain.on("readFile", async (event, path) => {
   try {
-    const data = await fs.promises.readFile(__dirname + '/../' + path, 'utf8');
+    const data = await fs.promises.readFile(path, 'utf8');
     event.reply("readFileComplete", data);
   } catch (error) {
     console.error("Error in readFile", error);
@@ -125,7 +133,7 @@ ipcMain.on("readFile", async (event, path) => {
 
 ipcMain.on("readImage", async (event, path) => {
   try {
-    const base64 = await fs.promises.readFile(__dirname + '/../' + path, 'base64');
+    const base64 = await fs.promises.readFile(path, 'base64');
     event.reply("readImageComplete", base64);
   } catch (error) {
     console.error("Error in readImage", error);
@@ -133,10 +141,9 @@ ipcMain.on("readImage", async (event, path) => {
   }
 });
 
-ipcMain.on("uninstall", async (event, gameName) => {
+ipcMain.on("uninstall", async (event, gamePath,options = []) => {
   let script;
-  const gamePath = path.join(__dirname, "../downloads", gameName);
-  const scriptPath = path.join(gamePath, '_script.js');
+  const scriptPath = path.join(gamePath, '_script.mjs');
 
   if (!fs.existsSync(gamePath)) {
     return event.reply("uninstallError", "Game not found");
@@ -151,10 +158,16 @@ ipcMain.on("uninstall", async (event, gameName) => {
 
   const action = "uninstall";
   if (script[action]) {
-    await script[action]((msg,percentage)=>{
-      event.reply("uninstallProgress", {msg,percentage});
-      console.log("uninstallProgress", {msg,percentage});
-    })
+    options.gamePath = gamePath;
+    options.downloadPath = downloadpath;
+    options.gameName = gameName;
+    options.execa = execa;
+    options.onProgress = (msg,percentage)=>{
+      event.reply("runScriptProgress", {msg,percentage});
+      console.log("runScriptProgress", {msg,percentage});
+    }
+
+    await script[action](options)
   }
   console.log(gamePath);
   fs.rmdirSync(gamePath, { recursive: true });

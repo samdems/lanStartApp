@@ -58,8 +58,7 @@ function calculateOptions() {
 async function run (name, file) {
   try {
     const gameoptions = {username:userStore.name,key:keyStore.getKey(gamesStore.activeGame.id)?.key};
-    debugger;
-    await window.runScript(name, file,gameoptions);
+    await window.runScript(name, file,gameoptions,gamesStore.downloadDir);
   } catch (error) {
     alertsStore.add({
       title: "Error",

@@ -34,7 +34,8 @@ export const useDownloaderStore = defineStore("downloader",() => {
     if(!gameName) return console.error('No game name provided');
 
     try {
-      await window.uninstall(gameName,(data: {percentage: string, message: string}) => {
+      const path = gamesStore.downloadDir + '/' + gameName;
+      await window.uninstall(path,(data: {percentage: string, message: string}) => {
         updateProgress(data.percentage,data.message);
         console.log(data);
       })
@@ -65,7 +66,8 @@ export const useDownloaderStore = defineStore("downloader",() => {
     if(!gameName) return console.error('No game name provided');
 
     try {
-      await window.download(url,gameName, (data: {percentage: string, message: string}) => {  
+      const path = gamesStore.downloadDir + '/' + gameName;
+      await window.download(url,gameName,path, (data: {percentage: string, message: string}) => {  
         updateProgress(data.percentage,data.message);
         console.log(data);
       })
@@ -75,7 +77,7 @@ export const useDownloaderStore = defineStore("downloader",() => {
         {url:gameinfo.box_image, name:"box_image"},
         {url:gameinfo.icon_image, name:"icon_image"},
         {url:gameinfo.logo_image, name:"logo_image"},
-      ],gameName,(data: {percentage: string, message: string}) => {
+      ],gameName,gamesStore.downloadDir,(data: {percentage: string, message: string}) => {
         updateProgress(data.percentage,data.message);
         console.log(data);
       }
@@ -83,14 +85,14 @@ export const useDownloaderStore = defineStore("downloader",() => {
 
       await window.addFiles([
         {text:JSON.stringify(gameinfo,null,2), name:"_gameinfo.json"},
-        {text:gameinfo.game_archives[archive].script, name:"_script.js"},
-      ],gameName).catch(e => console.error(e));
+        {text:gameinfo.game_archives[archive].script, name:"_script.mjs"},
+      ],gameName,gamesStore.downloadDir).catch(e => console.error(e));
 
       const options = {
         username:userStore.name,
         key:keyStore.getKey(gameinfo.id,0)?.key,
       }
-      await window.runScript('install',gameName,options,(data: {percentage: string, message: string}) => {
+      await window.runScript('install',gameName,options,gamesStore.downloadDir,(data: {percentage: string, message: string}) => {
         updateProgress(data.percentage,data.message);
         console.log(data);
       }
