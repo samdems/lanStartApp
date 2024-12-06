@@ -25,6 +25,8 @@ class GameKeyResource extends Resource
                     ->maxLength(255),
                 Forms\Components\Select::make('game_id')
                     ->relationship(name: 'game', titleAttribute: 'title'),
+                Forms\Components\Select::make('user_id')
+                    ->relationship(name: 'user', titleAttribute: 'name')
             ]);
     }
 
@@ -35,6 +37,9 @@ class GameKeyResource extends Resource
                 Tables\Columns\TextColumn::make('key')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('game_id')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('user_id')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
